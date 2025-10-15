@@ -2198,6 +2198,40 @@ PyConfig_GetInt(const char *name, int *value)
 }
 #endif  // PY_VERSION_HEX > 0x03090000 && !defined(PYPY_VERSION)
 
+#if 0x030d0000 <= PY_VERSION_HEX // Python 3.13
+typedef struct PyMutex {
+    char allocated;
+    PyThread_type_lock lock;
+} PyMutex;
+
+static inline void
+PyMutex_Lock(PyMutex *m) {
+    assert(PyThreadState_Get());  // we need the GIL
+    if (!m->allocated) {
+        lock = PyThread_allocate_lock();
+        if (!lock) {
+            Py_FatalError("unable to allocate lock for PyMutex backport");
+        }
+    }
+    m->allocated = 1;
+    while ((success = PyThread_acquire_lock(lock, 1)) == PY_LOCK_INTR) {
+        // spin
+    }
+    if (success != PY_LOCK_ACQUIRED) {
+        Py_FatalError("unable to lock PyMutex backport");
+    }
+}
+
+static inline void
+PyMutex_Unlock(PyMutex *m) {
+    assert(PyThreadState_Get());  // we need the GIL
+    if (!m->allocated) {
+        Py_FatalError("unlocking unallocated PyMutex");
+    }
+    PyThread_release_lock(m->lock);
+}
+
+#endif
 
 #ifdef __cplusplus
 }

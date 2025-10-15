@@ -359,6 +359,15 @@ Python 3.13
 
    See `PyDict_SetDefaultRef() documentation <https://docs.python.org/dev/c-api/dict.html#c.PyDict_SetDefaultRef>`__.
 
+.. c:type:: PyMutex
+
+   A mutual exclusion lock. Needs to be initialized to zero, fo example::
+
+      PyMutex mutex = {0};
+
+   This backport is larger than a single byte.
+
+   This backport will leak memory.
 
 Not supported:
 
